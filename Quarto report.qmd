@@ -1,0 +1,187 @@
+---
+title: "Assignment 2: Quarto Report"
+subtitle: "MT5000: Data Analytics & Visualisation"
+author: "Camille REGNIER"
+date: 04/17/2023
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# **Diarrhoea: a disease of inequity that impacts young children**
+
+According to UNICEF, the disease accounts for approximately 9% of all deaths among children under age 5 worldwide in 2019.
+
+## **Third-world countries lack diarrhoea treatments**
+
+*Percentage of children (under age 5) with diarrhoea who received treatment (zinc).*
+
+```{r}
+# Install R packages if not installed -------------------------------------
+if (!require("ggplot2")) install.packages("ggplot2", dependencies = TRUE) 
+if (!require("tidyverse")) install.packages("tidyverse", dependencies = TRUE)
+if (!require("mapdata")) install.packages("mapdata", dependencies = TRUE)
+
+# Load R packages ---------------------------------------------------------
+library(ggplot2)              
+library(tidyverse)            
+library(mapdata)
+
+# Load the data -----------------------------------------------------------
+unicef_indicator <- read.csv("/cloud/project/unicef_indicator_2.csv")
+
+# Join the mapdata with our unicef data file ------------------------------
+mapdata <- map_data("world") 
+mapdata <- left_join(mapdata, unicef_indicator, by="region")
+
+# Plot the map with the values --------------------------------------------
+map1<-ggplot(mapdata, aes( x = long, y = lat, group=group)) +
+  geom_polygon(aes(fill = obs_value), color = "grey")
+
+# Change the aesthetics of the map ----------------------------------------
+map2 <- map1 + scale_fill_gradient(name = "Diarrhoea treatment", low = "burlywood3", high =  "chocolate", na.value = "grey90")+
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title.y=element_blank(),
+        axis.title.x=element_blank(),
+        rect = element_blank())
+
+# Install and load added R packages ---------------------------------------
+if (!require("cowplot")) install.packages("cowplot", dependencies = TRUE)
+library(cowplot)
+if (!require("magick")) install.packages("magick", dependencies = TRUE)
+library(magick)
+
+
+# Add a logo --------------------------------------------------------------
+ggdraw() +
+  draw_image("Unicef.png",  x = 0.40, y = 0.3, scale = .18) +
+  draw_plot(map2)
+```
+
+## **The access to treatment is not linear and it remains insufficient**
+
+```{r}
+# Install R packages if not installed -------------------------------------
+if (!require("ggplot2")) install.packages("ggplot2", dependencies = TRUE) 
+if (!require("tidyverse")) install.packages("tidyverse", dependencies = TRUE)
+
+# Load R packages ---------------------------------------------------------
+library(tidyr)
+library(ggplot2)         
+
+# Load the data -----------------------------------------------------------
+unicef_indicator <- read.csv("/cloud/project/unicef_indicator_2.csv")
+unicef_metadata <- read.csv("/cloud/project/unicef_metadata (1).csv")
+
+# Convert the data to a time series object
+unicef_ts <- ts(unicef_indicator$obs_value, start = c(2005), end = c(2021), frequency = 1)
+
+# Create the time series chart
+plot(unicef_ts, type = "l", xlab = "Years", ylab = "% of children treated (< age 5)", 
+     main = "Diarrhoea Treatment over Time")
+```
+
+```{r}
+# Install and load R packages ---------------------------------------------
+if (!require("knitr")) install.packages("knitr", dependencies = TRUE)
+library(knitr)
+
+include_graphics("Diarrhoea.png")
+```
+
+The recommended treatment is fairly simple: - oral hydration (with the aid of oral rehydration tablets, ORS) - continued feeding - zinc supplements
+
+## **Evolution of the treatment of diarrhoea by country**
+
+```{r}
+# Install R packages if not installed -------------------------------------
+if (!require("tidyverse")) install.packages("tidyverse", dependencies = TRUE)
+if (!require("ggplot2")) install.packages("ggplot2", dependencies = TRUE)
+if (!require("plotly")) install.packages("plotly", dependencies = TRUE)
+
+# Load R packages ---------------------------------------------------------
+library(tidyverse)
+library(ggplot2)              
+library(plotly)
+
+# Load the data -----------------------------------------------------------
+unicef_indicator <- read.csv("/cloud/project/unicef_indicator_2.csv")
+
+# Create the plot using ggplot2
+plot <- ggplot(unicef_indicator, aes(x = time_period, y = obs_value, fill = region)) +
+  geom_bar(stat = "identity") +
+  labs(x = NULL, y = "% of children treated (< age 5)", title = "Treatment of Diarrhoea by country") +
+  guides(fill = FALSE)
+
+# Convert the plot to a plotly object
+plotly_plot <- ggplotly(plot)
+
+# Display the plotly object
+plotly_plot
+```
+
+## **There is no observed correlation between the treatment of diarrhoea and life expectancy**
+
+```{r}
+# Install R packages if not installed -------------------------------------
+if (!require("ggplot2")) install.packages("ggplot2", dependencies = TRUE) 
+if (!require("tidyverse")) install.packages("tidyverse", dependencies = TRUE)
+if (!require("mapdata")) install.packages("mapdata", dependencies = TRUE)
+
+# Load R packages ---------------------------------------------------------
+library(ggplot2)              
+library(tidyverse)            
+library(mapdata)
+
+# Load the data -----------------------------------------------------------
+unicef_indicator <- read.csv("/cloud/project/unicef_indicator_2.csv")
+unicef_metadata <- read.csv("/cloud/project/unicef_metadata (1).csv")
+
+# Join the metadata with the unicef data file -----------------------------
+unicef_join <- left_join(unicef_indicator, unicef_metadata, by="region")
+
+# Create the scatter plot with the regression line ------------------------
+ggplot(unicef_join, aes(x = Life_expectancy_at_birth, y = obs_value)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Life Expectancy at birth", y = "Diarrhoea Treatment", title = "Diarrhoea Treatment vs. Life Expectancy")
+```
+
+### Protective interventions provide the foundations for keeping children healthy and free of disease
+
+1.  **Exclusive breastfeeding**:
+
+-   Meaning no other foods or liquids, even water for the first 6 months of a newborn's life.
+-   This protects the child against infections and provides the perfect nutrition at that age.
+
+2.  **Complementary feeding along with breastfeeding**:
+
+-   Adequate complementary feeding (providing children with safe, nutritious and age-appropriate foods in sufficient quantities and continued breastfeeding) from 6 months to 2 years of age.
+
+3.  **Vitamin A supplements**:
+
+-   High-doses of vitamin A supplementation can strengthen immune systems and reduce cases of diarrhoea by 15%.
+
+### Preventative interventions help stop disease transmission and keep children from becoming ill
+
+1.  **Immunity**:
+
+-   Rotavirus vaccines offer protection against one of the leading causes of infant mortality from diarrhoea.
+
+2.  **Hygiene, sanitation and safe drinking water**:
+
+-   Nearly 60% of diarrheal disease deaths worldwide are caused by unsafe drinking water and inadequate sanitation. Simply washing your hands with soap can reduce your risk of diarrhoea by at least 40% and significantly reduce your risk of respiratory infections.
+
+```{r}
+# Install and load R packages ---------------------------------------------
+if (!require("knitr")) install.packages("knitr", dependencies = TRUE)
+library(knitr)
+
+include_graphics("unicef children.jpg")
+```
+
+***To fight the good fight and learn more about this disease, visit [the unicef website.](https://data.unicef.org/topic/child-health/diarrhoeal-disease/)***
